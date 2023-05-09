@@ -7,15 +7,11 @@
 #in the directory and all subdirectories and Y is the number of matching lines found in respective files,
 #where a matching line refers to a line which contains searchstr (and may also contain additional content).
 
-red=$(tput setaf 1)
-green=$(tput setaf 2)
-reset=$(tput sgr0)
-
 filesdir=$1
 searchstr=$2
 
 usage="program to find a certain text in files inside a folder
-${green}Usage${reset}:
+Usage:
 ./$(basename "$0") <search_directory> <search_text> 
 example:
     ./$(basename "$0") /tmp/aesd-data/ AELD_IS_FUN"
@@ -26,7 +22,7 @@ if [ ! $# -eq 2 ]; then
 fi
 
 if [ ! -d $filesdir ]; then
-    echo "${red}directory doesn't exit${reset}"
+    echo "directory doesn't exit"
     echo "$usage"
     exit 1
 fi
