@@ -19,7 +19,6 @@ fi
 KERNEL_REPO=git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git
 KERNEL_VERSION=v5.1.10
 BUSYBOX_VERSION=1_33_1
-CROSS_COMPILER_PATH=/home/fak4hi/Workspace/arm-cross-compiler/
 FINDER_APP_DIR=$(realpath $(dirname $0))
 ARCH=arm64
 CROSS_COMPILE=aarch64-none-linux-gnu-
@@ -120,7 +119,8 @@ if [ $? -ne 0 ]; then
     exit $?
 fi
 # Add library dependencies to rootfs
-echo " Library dependencies "
+echo "Library dependencies "
+CROSS_COMPILER_PATH=$(${CROSS_COMPILE}gcc -print-sysroot)
 PROG_INTERPERTER_LIB=$(${CROSS_COMPILE}readelf -a busybox | grep -oP "(?<=program interpreter: /lib/).*(?=])") # getting lib name
 SHARED_LIBS=$(${CROSS_COMPILE}readelf -a busybox | grep -oP "Shared library:\K[^;]*" | tr -d "[]")
 echo $PROG_INTERPERTER_LIB
