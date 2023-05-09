@@ -92,26 +92,27 @@ if [ ! -d "${OUTDIR}/busybox" ]; then
 
 else
     cd busybox
-    if [ ! -f busybox ]; then
-        #  Configure busybox
-        echo " **************** cleaning busybox repo ****************  "
-        # make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} distclean # deep clean
-        echo " **************** creating busybox defcofing ****************  "
-        make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} defconfig # defconfig
-        if [ $? -ne 0 ]; then
-            echo " failed to create busybox defcofing  "
-            exit $?
-        fi
-        #  Make and install busybox
-        echo " **************** building busybox ****************  "
-        make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} -j$(nproc)
-        if [ $? -ne 0 ]; then
-            echo " failed to build busybox  "
-            exit $?
-        fi
-    fi
+
 fi
 
+if [ ! -f busybox ]; then
+    #  Configure busybox
+    echo " **************** cleaning busybox repo ****************  "
+    # make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} distclean # deep clean
+    echo " **************** creating busybox defcofing ****************  "
+    make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} defconfig # defconfig
+    if [ $? -ne 0 ]; then
+        echo " failed to create busybox defcofing  "
+        exit $?
+    fi
+    #  Make and install busybox
+    echo " **************** building busybox ****************  "
+    make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} -j$(nproc)
+    if [ $? -ne 0 ]; then
+        echo " failed to build busybox  "
+        exit $?
+    fi
+fi
 echo " **************** installing busybox ****************  "
 make CONFIG_PREFIX=${OUTDIR}/rootfs ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} install
 if [ $? -ne 0 ]; then
