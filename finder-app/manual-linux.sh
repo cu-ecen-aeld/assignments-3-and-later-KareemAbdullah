@@ -12,9 +12,9 @@ if [ -z "${OUTDIR}" ]; then
 fi
 
 #colors for debug msgs
-red=$(tput setaf 1)
-green=$(tput setaf 2)
-reset=$(tput sgr0)
+# red=$(tput setaf 1)
+# green=$(tput setaf 2)
+# reset=$(tput sgr0)
 
 KERNEL_REPO=git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git
 KERNEL_VERSION=v5.1.10
@@ -47,25 +47,25 @@ if [ ! -e ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ]; then
     sed -i '/YYLTYPE yylloc/d' scripts/dtc/dtc-lexer.l
 
     # Add kernel build steps here
-    echo "${green}cleaning kernel repo ${reset}"
+    echo " cleaning kernel repo  "
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} mrproper # deep clean
-    echo "${green}**************** creating kernel defcofing **************** ${reset}"
+    echo " **************** creating kernel defcofing ****************  "
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} defconfig # defconfig
     if [ $? -ne 0 ]; then
-        echo "${red}failed to create kernel defconfig${reset}"
+        echo "failed to create kernel defconfig "
         exit $?
     fi
 
-    echo "${green}**************** building kernel image**************** ${reset}"
+    echo " **************** building kernel image****************  "
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} all -j$(nproc) # vmlinux
     if [ $? -ne 0 ]; then
-        echo "${red}failed to build kernel ${reset}"
+        echo " failed to build kernel  "
         exit $?
     fi
     # commanded for now
-    # echo "${green}**************** building kernel modules **************** ${reset}"
+    # echo " **************** building kernel modules ****************  "
     # make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} modules #modules
-    # echo "${green}**************** building device trees **************** ${reset}"
+    # echo " **************** building device trees ****************  "
     # make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} dtbs # device trees
 fi
 
@@ -94,32 +94,32 @@ else
     cd busybox
     if [ ! -f busybox ]; then
         #  Configure busybox
-        echo "${green}**************** cleaning busybox repo **************** ${reset}"
+        echo " **************** cleaning busybox repo ****************  "
         # make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} distclean # deep clean
-        echo "${green}**************** creating busybox defcofing **************** ${reset}"
+        echo " **************** creating busybox defcofing ****************  "
         make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} defconfig # defconfig
         if [ $? -ne 0 ]; then
-            echo "${red}failed to create busybox defcofing ${reset}"
+            echo " failed to create busybox defcofing  "
             exit $?
         fi
         #  Make and install busybox
-        echo "${green}**************** building busybox **************** ${reset}"
+        echo " **************** building busybox ****************  "
         make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} -j$(nproc)
         if [ $? -ne 0 ]; then
-            echo "${red}failed to build busybox ${reset}"
+            echo " failed to build busybox  "
             exit $?
         fi
     fi
 fi
 
-echo "${green}**************** installing busybox **************** ${reset}"
+echo " **************** installing busybox ****************  "
 make CONFIG_PREFIX=${OUTDIR}/rootfs ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} install
 if [ $? -ne 0 ]; then
-    echo "${red}failed to install busybox ${reset}"
+    echo " failed to install busybox  "
     exit $?
 fi
 # Add library dependencies to rootfs
-echo "${red}Library dependencies${reset}"
+echo " Library dependencies "
 PROG_INTERPERTER_LIB=$(${CROSS_COMPILE}readelf -a busybox | grep -oP "(?<=program interpreter: /lib/).*(?=])") # getting lib name
 SHARED_LIBS=$(${CROSS_COMPILE}readelf -a busybox | grep -oP "Shared library:\K[^;]*" | tr -d "[]")
 echo $PROG_INTERPERTER_LIB
@@ -139,7 +139,7 @@ sudo mknod -m 666 ${OUTDIR}/rootfs/dev/console c 5 1
 
 # Clean and build the writer utility
 cd ${FINDER_APP_DIR}
-echo "${green} **************** building writer app **************** ${reset}"
+echo "  **************** building writer app ****************  "
 make clean
 make CROSS_COMPILE=${CROSS_COMPILE}
 # Copy the finder related scripts and executables to the /home directory
@@ -152,7 +152,7 @@ cp conf/username.txt conf/assignment.txt ${OUTDIR}/rootfs/home/conf
 sudo chown -R root:root ${OUTDIR}/rootfs
 # Create initramfs.cpio.gz
 cd ${OUTDIR}/rootfs
-echo "${green} **************** creating initramfs.cpio.gz **************** ${reset}"
+echo "  **************** creating initramfs.cpio.gz ****************  "
 find . | cpio --create --verbose --format newc --owner root:root >${OUTDIR}/initramfs.cpio
 cd ${OUTDIR}
 gzip -f initramfs.cpio
