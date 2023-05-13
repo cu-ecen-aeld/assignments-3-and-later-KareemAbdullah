@@ -55,7 +55,7 @@ for i in $(seq 1 $NUMFILES); do
 done
 
 OUTPUTSTRING=$(finder.sh "$WRITEDIR" "$WRITESTR")
-
+echo ${OUTPUTSTRING} >${RESULTFILE}
 # remove temporary directories
 rm -rf /tmp/aeld-data
 
@@ -68,5 +68,3 @@ else
 	echo "failed: expected  ${MATCHSTR} in ${OUTPUTSTRING} but instead found"
 	exit 1
 fi
-
-echo ${OUTPUTSTRING} >${RESULTFILE}
