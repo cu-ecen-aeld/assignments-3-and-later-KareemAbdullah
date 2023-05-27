@@ -20,10 +20,11 @@ void vLogFailAndExit(char *error_string, int retval_error)
 
 int main(int argc, char **argv)
 {
-    int server_fd, client_fd;
+    int server_fd = -1, client_fd = -1;
     struct sockaddr client_address;
     struct addrinfo hints;
-    struct addrinfo *servinfo;
+    struct addrinfo *servinfo = NULL;
+    char client_ip[INET6_ADDRSTRLEN];
     char buffer[MAX_BUF] = {0};
     FILE *file;
     socklen_t client_len = sizeof(client_address);
@@ -33,14 +34,11 @@ int main(int argc, char **argv)
 
     if (argc > 1 && strcmp(argv[1], "-d") == 0)
     {
-        if (daemonize() < 0)
-        {
-            syslog(LOG_ERR, "Failed to daemonize");
-            exit(EXIT_FAILURE);
-        }
+        vDaemonize();
     }
 
     struct sigaction sigaction_l;
+
     memset(&sigaction_l, 0U, sizeof(struct sigaction));
     sigaction_l.sa_handler = vSocketSigHandler;
 
@@ -84,7 +82,8 @@ int main(int argc, char **argv)
             if (g_keep_running)
                 vLogFailAndExit("accept failed", -1);
         }
-        syslog(LOG_INFO, "Accepted connection from %s", client_address.sa_data);
+        inet_ntop(client_address.sa_family, pvGetClientAddr(&client_address), client_ip, sizeof(client_ip));
+        syslog(LOG_INFO, "Accepted connection from %s", client_ip);
         file = fopen(FILE_WRITE_PATH, "ab+");
         if (file < 0)
         {
@@ -134,42 +133,63 @@ int main(int argc, char **argv)
         send(client_fd, response_data, file_size, 0);
         free(response_data);
 
-        syslog(LOG_INFO, "Closed connection from %s", client_address.sa_data);
+        syslog(LOG_INFO, "Closed connection from %s", client_ip);
     }
 
-    close(client_fd);
-    close(server_fd);
+    if (client_fd != -1)
+        close(client_fd);
+    if (server_fd != -1)
+        close(server_fd);
     // free before closing
-    freeaddrinfo(servinfo);
+    if (servinfo)
+        freeaddrinfo(servinfo);
     remove(FILE_WRITE_PATH);
     closelog();
+
     return EXIT_SUCCESS;
 }
 
-int daemonize()
+void *pvGetClientAddr(struct sockaddr *client_addr)
+{
+    if (client_addr->sa_family == AF_INET)
+    {
+        return &(((struct sockaddr_in *)client_addr)->sin_addr);
+    }
+
+    return &(((struct sockaddr_in6 *)client_addr)->sin6_addr);
+}
+
+void vDaemonize()
 {
     pid_t pid, sid;
     pid = fork();
     if (pid < 0)
     {
-        return -1;
+        vLogFailAndExit("Failed to daemonize", -1);
     }
     if (pid > 0)
     {
         exit(EXIT_SUCCESS);
     }
-    umask(0);
     sid = setsid();
+
     if (sid < 0)
     {
-        return -1;
+        vLogFailAndExit("Failed to daemonize", -1);
     }
     if ((chdir("/")) < 0)
     {
-        return -1;
+        vLogFailAndExit("Failed to daemonize", -1);
     }
+
     close(STDIN_FILENO);
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
-    return 0;
+
+    if (-1 == open("/dev/null", O_RDWR, 0666))
+    {
+        vLogFailAndExit("failed to redirect to /dev/null", -1);
+    }
+    dup(0);
+    dup(0);
 }
