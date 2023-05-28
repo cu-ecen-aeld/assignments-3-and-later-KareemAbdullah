@@ -51,21 +51,25 @@ int main(int argc, char **argv)
     {
         vLogFailAndExit("ERROR registering for SIGTERM", EXIT_FAILURE);
     }
-    // open socket
-    if (0U == (server_fd = socket(PF_INET, SOCK_STREAM, 0)))
-    {
-        vLogFailAndExit("socket failed", -1);
-    }
+
     // get address info
     memset(&hints, 0U, sizeof(struct addrinfo));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
     hints.ai_flags = AI_PASSIVE;
 
     if (0u != getaddrinfo(NULL, PORT, &hints, &servinfo))
     {
         vLogFailAndExit("failed getting server address", -1);
     }
+    // open socket
+    if (0U == (server_fd = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol)))
+    {
+        vLogFailAndExit("socket failed", -1);
+    }
     //! bind
-    if (0U != bind(server_fd, servinfo->ai_addr, sizeof(struct sockaddr)))
+    if (0U != bind(server_fd, servinfo->ai_addr, (int)servinfo->ai_addrlen))
     {
         vLogFailAndExit("bind failed", -1);
     }
